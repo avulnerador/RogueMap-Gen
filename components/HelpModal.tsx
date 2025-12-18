@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 
 interface Props {
@@ -8,71 +10,102 @@ interface Props {
 export const HelpModal: React.FC<Props> = ({ onClose, t }) => {
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-slate-800 rounded-lg shadow-2xl w-full max-w-lg border border-slate-600 flex flex-col animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-slate-800 rounded-lg shadow-2xl w-full max-w-2xl border border-slate-600 flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
                 
                 {/* Header */}
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-lg">
+                <div className="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-lg">
                     <h2 className="text-xl font-bold text-yellow-400 flex items-center gap-2">
                         <i className="fas fa-book-open"></i> {t('helpTitle')}
                     </h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white">
+                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
                         <i className="fas fa-times fa-lg"></i>
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="p-6 space-y-6 text-slate-200">
+                <div className="p-6 overflow-y-auto custom-scrollbar space-y-8 text-slate-200">
                     
-                    {/* Navigation Section */}
-                    <div className="flex gap-4 items-start">
-                        <div className="w-10 h-10 bg-blue-900/50 rounded flex items-center justify-center shrink-0 border border-blue-700 text-blue-300">
-                            <i className="fas fa-arrows-alt fa-lg"></i>
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg mb-1 text-white">{t('navTitle')}</h3>
-                            <ul className="text-sm space-y-1 text-slate-300">
-                                <li><i className="fas fa-mouse-pointer w-5 text-center"></i> {t('navDrag')}</li>
-                                <li><i className="fas fa-search-plus w-5 text-center"></i> {t('navZoom')}</li>
-                                <li><i className="fas fa-compress w-5 text-center"></i> {t('navFit')}</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <hr className="border-slate-700" />
-
-                    {/* Editing Section */}
-                    <div className="flex gap-4 items-start">
-                        <div className="w-10 h-10 bg-emerald-900/50 rounded flex items-center justify-center shrink-0 border border-emerald-700 text-emerald-300">
-                            <i className="fas fa-edit fa-lg"></i>
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg mb-1 text-white">{t('editTitle')}</h3>
-                            <p className="text-sm text-slate-300 mb-2">{t('editClick')}</p>
-                            <p className="text-sm text-slate-400 italic mb-2"><i className="fas fa-lock text-xs"></i> {t('editLock')}</p>
-                            <p className="text-sm text-slate-300">
-                                {t('iconTip')} <a href="https://fontawesome.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">fontawesome.com</a>
-                            </p>
+                    {/* Controls Table */}
+                    <div>
+                        <h3 className="text-lg font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">
+                            <i className="fas fa-gamepad mr-2"></i>{t('helpControlsTitle')}
+                        </h3>
+                        <div className="bg-slate-900 rounded border border-slate-700 overflow-hidden">
+                            <table className="w-full text-sm">
+                                <tbody>
+                                    <tr className="border-b border-slate-800">
+                                        <td className="p-3 font-bold text-white w-1/3 bg-slate-800/50">{t('ctrlMoveNode')}</td>
+                                        <td className="p-3 text-slate-300"><i className="fas fa-hand-pointer mr-2 text-blue-400"></i> {t('ctrlMoveNodeDesc')}</td>
+                                    </tr>
+                                    <tr className="border-b border-slate-800">
+                                        <td className="p-3 font-bold text-white bg-slate-800/50">{t('ctrlEditNode')}</td>
+                                        <td className="p-3 text-slate-300"><i className="fas fa-mouse-pointer mr-2 text-yellow-400"></i> {t('ctrlEditNodeDesc')}</td>
+                                    </tr>
+                                    <tr className="border-b border-slate-800">
+                                        <td className="p-3 font-bold text-white bg-slate-800/50">{t('ctrlPanMap')}</td>
+                                        <td className="p-3 text-slate-300"><i className="fas fa-arrows-alt mr-2 text-slate-400"></i> {t('ctrlPanMapDesc')}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-3 font-bold text-white bg-slate-800/50">{t('ctrlZoom')}</td>
+                                        <td className="p-3 text-slate-300"><i className="fas fa-search-plus mr-2 text-slate-400"></i> {t('ctrlZoomDesc')}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <hr className="border-slate-700" />
+                    {/* Features Grid */}
+                    <div>
+                        <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-700 pb-2">
+                            <i className="fas fa-lightbulb mr-2"></i>{t('helpWorkflowTitle')}
+                        </h3>
+                        
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {/* Feature 1 */}
+                            <div className="bg-slate-700/30 p-4 rounded border border-slate-700">
+                                <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                    <i className="fas fa-sync text-blue-400"></i> {t('featGenTitle')}
+                                </h4>
+                                <p className="text-xs text-slate-300 leading-relaxed">
+                                    {t('featGenDesc')}
+                                </p>
+                            </div>
 
-                    {/* Generation Section */}
-                    <div className="flex gap-4 items-start">
-                        <div className="w-10 h-10 bg-purple-900/50 rounded flex items-center justify-center shrink-0 border border-purple-700 text-purple-300">
-                            <i className="fas fa-magic fa-lg"></i>
+                            {/* Feature 2 */}
+                            <div className="bg-slate-700/30 p-4 rounded border border-slate-700">
+                                <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                    <i className="fas fa-lock text-red-400"></i> {t('featLockTitle')}
+                                </h4>
+                                <p className="text-xs text-slate-300 leading-relaxed">
+                                    {t('featLockDesc')}
+                                </p>
+                            </div>
+
+                            {/* Feature 3 */}
+                            <div className="bg-slate-700/30 p-4 rounded border border-slate-700 col-span-1 md:col-span-2">
+                                <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                    <i className="fas fa-random text-purple-400"></i> {t('featChaosTitle')}
+                                </h4>
+                                <p className="text-xs text-slate-300 leading-relaxed">
+                                    {t('featChaosDesc')}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-lg mb-1 text-white">{t('genTitle')}</h3>
-                            <p className="text-sm text-slate-300">{t('genDesc')}</p>
-                        </div>
+                    </div>
+
+                    {/* Footer Info */}
+                    <div className="bg-blue-900/20 p-3 rounded border border-blue-900/50 flex items-center gap-3">
+                        <i className="fab fa-font-awesome text-2xl text-blue-400 ml-2"></i>
+                        <p className="text-sm text-slate-300">
+                            {t('iconTip')} <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline font-bold">fontawesome.com</a>
+                        </p>
                     </div>
 
                 </div>
 
                 {/* Footer */}
                 <div className="p-4 border-t border-slate-700 bg-slate-900 flex justify-end rounded-b-lg">
-                    <button onClick={onClose} className="px-6 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded shadow-lg">
+                    <button onClick={onClose} className="px-8 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded shadow-lg transition-transform active:scale-95">
                         {t('done')}
                     </button>
                 </div>
