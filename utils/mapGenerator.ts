@@ -364,14 +364,18 @@ export function regenerateNodePositions(map: MapNode[][], config: MapConfig): Ma
             // Apply Random Jitter (Slay the Spire Style) if enabled
             if (config.randomizeNodePositions) {
                 // Jitter logic with intensity control
-                // Intensity is 0 to 100
+                // Intensity is 0 to 200 (percentage)
                 const intensity = (config.jitterIntensity ?? 40) / 100;
                 
                 if (node.row !== 0) {
                     // Calculate range based on Spacing * Intensity
-                    // e.g., if Intensity is 1.0 (100%), we allow movement up to 100% of spacing in X and 50% in Y
+                    // e.g., if Intensity is 2.0 (200%), we allow movement up to 200% of spacing in X.
                     const maxX = config.spacingX * intensity; 
-                    const maxY = config.spacingY * (intensity * 0.6); // Keep Y jitter slightly lower to prevent floor merging
+                    
+                    // For Y, we usually restrain it to keep floors distinct, but for high intensity
+                    // we allow more vertical chaos (up to 70% of spacing when intensity is 2.0)
+                    // This allows some overlap but maintains some semblance of forward progression.
+                    const maxY = config.spacingY * (intensity * 0.7); 
 
                     calculatedX += (Math.random() - 0.5) * maxX;
                     calculatedY += (Math.random() - 0.5) * maxY;

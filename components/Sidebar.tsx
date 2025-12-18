@@ -176,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                         <input 
                                             type="range" 
                                             min="0" 
-                                            max="100" 
+                                            max="200" 
                                             step="5"
                                             className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                             value={mapConfig.jitterIntensity ?? 40}

@@ -37,7 +37,7 @@ export interface MapConfig {
     spacingY: number;
     maxConnectionReach: number;
     randomizeNodePositions: boolean; // Field for Slay the Spire style layout
-    jitterIntensity: number; // New field: 0 to 100 representing percentage of chaos
+    jitterIntensity: number; // New field: 0 to 200 representing percentage of chaos
 }
 
 export interface VisualConfig {
