@@ -133,8 +133,7 @@ export function generateMapData(config: MapConfig, nodeTypes: Record<string, Nod
                 ...lockedMiniBossNode,
                 row: r,
                 connections: [], 
-                x: 0,
-                y: 0
+                // Coordinates recalculated later
             });
         } 
         else {
@@ -156,8 +155,6 @@ export function generateMapData(config: MapConfig, nodeTypes: Record<string, Nod
                         ...existingNode,
                         row: r, 
                         connections: [], 
-                        x: 0, 
-                        y: 0
                     });
                 } else {
                     // GENERATE NEW NODE
@@ -203,7 +200,6 @@ export function generateMapData(config: MapConfig, nodeTypes: Record<string, Nod
             ...existingStart,
             row: 0,
             connections: [],
-            x: 0, y: 0
         };
     } else {
         startNode = {
@@ -343,7 +339,9 @@ export function enforceBossRowTopology(map: MapNode[][], config: MapConfig, node
 
 export function regenerateNodePositions(map: MapNode[][], config: MapConfig): MapNode[][] {
     const newMap = map.map(row => row.map(node => ({ ...node }))); 
+    const NODE_VISUAL_SIZE = 70; // Approx visual size including border/padding
     
+    // 1. Calculate Base Positions + Jitter
     newMap.forEach((rowNodes, rowIndex) => {
         const rowWidth = (rowNodes.length - 1) * config.spacingX;
         const startX = -rowWidth / 2;
@@ -363,18 +361,10 @@ export function regenerateNodePositions(map: MapNode[][], config: MapConfig): Ma
 
             // Apply Random Jitter (Slay the Spire Style) if enabled
             if (config.randomizeNodePositions) {
-                // Jitter logic with intensity control
-                // Intensity is 0 to 200 (percentage)
                 const intensity = (config.jitterIntensity ?? 40) / 100;
                 
                 if (node.row !== 0) {
-                    // Calculate range based on Spacing * Intensity
-                    // e.g., if Intensity is 2.0 (200%), we allow movement up to 200% of spacing in X.
                     const maxX = config.spacingX * intensity; 
-                    
-                    // For Y, we usually restrain it to keep floors distinct, but for high intensity
-                    // we allow more vertical chaos (up to 70% of spacing when intensity is 2.0)
-                    // This allows some overlap but maintains some semblance of forward progression.
                     const maxY = config.spacingY * (intensity * 0.7); 
 
                     calculatedX += (Math.random() - 0.5) * maxX;
@@ -384,6 +374,52 @@ export function regenerateNodePositions(map: MapNode[][], config: MapConfig): Ma
 
             node.x = calculatedX;
             node.y = calculatedY;
+        });
+    });
+
+    // 2. Anti-Overlap Pass (Collision Prevention)
+    // We only need to check this if randomization is active, otherwise the grid is perfect.
+    if (config.randomizeNodePositions) {
+        newMap.forEach(rowNodes => {
+            // Sort nodes by their visual position (X or Y) to check immediate neighbors
+            // Note: We use a shallow copy to sort so we don't mess up the connection logic order
+            const sortedNodes = [...rowNodes].sort((a, b) => {
+                return config.orientation === 'vertical' ? a.x - b.x : a.y - b.y;
+            });
+
+            for (let i = 1; i < sortedNodes.length; i++) {
+                const prev = sortedNodes[i - 1];
+                const curr = sortedNodes[i];
+                // Increased gap to ensure nodes don't overlap even with high jitter
+                // 70px base size + 30px buffer = 100px minimum center-to-center distance
+                const minGap = NODE_VISUAL_SIZE + 30; 
+
+                if (config.orientation === 'vertical') {
+                    // Check Horizontal Distance
+                    const dist = curr.x - prev.x;
+                    if (dist < minGap) {
+                        // Push current node to the right
+                        const push = minGap - dist;
+                        curr.x += push;
+                    }
+                } else {
+                    // Check Vertical Distance (for horizontal layout)
+                    const dist = curr.y - prev.y;
+                    if (dist < minGap) {
+                        const push = minGap - dist;
+                        curr.y += push;
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Apply Manual Offsets (User Drag & Drop)
+    // This happens LAST so the user has final say, relative to the calculated position
+    newMap.forEach(rowNodes => {
+        rowNodes.forEach(node => {
+            if (node.manualOffsetX) node.x += node.manualOffsetX;
+            if (node.manualOffsetY) node.y += node.manualOffsetY;
         });
     });
 

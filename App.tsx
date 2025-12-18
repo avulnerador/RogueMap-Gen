@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MapCanvas } from './components/MapCanvas';
@@ -91,6 +92,39 @@ const App: React.FC = () => {
         return regenerateNodePositions(structurallyFixedMap, mapConfig);
     });
   }, [mapConfig, nodeTypes]);
+
+  // Handle Manual Node Dragging with Constraints
+  const handleNodeDrag = (nodeId: number, dx: number, dy: number) => {
+    setMapNodes(prev => {
+        const MAX_OFFSET_RADIUS = 150; // Maximum pixels a node can be dragged from its calculated origin
+
+        return prev.map(row => row.map(node => {
+            if (node.id !== nodeId) return node;
+
+            const currentOffsetX = node.manualOffsetX || 0;
+            const currentOffsetY = node.manualOffsetY || 0;
+
+            let newOffsetX = currentOffsetX + dx;
+            let newOffsetY = currentOffsetY + dy;
+
+            // Apply circular constraint
+            const dist = Math.sqrt(newOffsetX * newOffsetX + newOffsetY * newOffsetY);
+            if (dist > MAX_OFFSET_RADIUS) {
+                const ratio = MAX_OFFSET_RADIUS / dist;
+                newOffsetX *= ratio;
+                newOffsetY *= ratio;
+            }
+
+            return {
+                ...node,
+                x: node.x + (newOffsetX - currentOffsetX), // Apply delta to visual X immediately for smoothness
+                y: node.y + (newOffsetY - currentOffsetY), // Apply delta to visual Y
+                manualOffsetX: newOffsetX,
+                manualOffsetY: newOffsetY
+            };
+        }));
+    });
+  };
 
   // --- Initialization & Persistence ---
   useEffect(() => {
@@ -290,7 +324,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-gray-950 text-slate-200 font-sans overflow-hidden">
+    <div 
+        className="flex h-screen w-screen bg-gray-950 text-slate-200 font-sans overflow-hidden"
+        onContextMenu={(e) => e.preventDefault()} // Disable default context menu globally
+    >
       
       {/* Sidebar */}
       <Sidebar 
@@ -333,6 +370,7 @@ const App: React.FC = () => {
                 setZoom={setZoom}
                 onNodeClick={setEditingNodeId}
                 onFitToScreen={() => handleFitToScreen()}
+                onNodeDrag={handleNodeDrag}
             />
         </div>
       </div>

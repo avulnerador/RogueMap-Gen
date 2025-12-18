@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { MapNode, NodeTypeConfig, VisualConfig } from '../types';
 
@@ -6,12 +7,13 @@ interface Props {
     node: MapNode;
     config: NodeTypeConfig;
     visualConfig: VisualConfig;
-    onClick: () => void;
+    onContextMenu: (e: React.MouseEvent) => void; // Used for Edit
     onHover: (id: number | null) => void;
     isHighlighted: boolean;
+    onMouseDown: (e: React.MouseEvent) => void; // Used for Drag
 }
 
-export const MapNodeComponent: React.FC<Props> = ({ node, config, visualConfig, onClick, onHover, isHighlighted }) => {
+export const MapNodeComponent: React.FC<Props> = ({ node, config, visualConfig, onContextMenu, onHover, isHighlighted, onMouseDown }) => {
     // Styles
     const baseSize = 60;
     const scale = node.customSize || 1.0;
@@ -96,10 +98,11 @@ export const MapNodeComponent: React.FC<Props> = ({ node, config, visualConfig, 
                 alignItems: 'center',
                 justifyContent: 'center'
             }}
-            onClick={onClick}
+            onContextMenu={onContextMenu} // Right click triggers Edit
+            onMouseDown={onMouseDown} // Left click drag start
             onMouseEnter={() => onHover(node.id)}
             onMouseLeave={() => onHover(null)}
-            title={`ID: ${node.id} | Type: ${config.name}`}
+            title={`ID: ${node.id} | Type: ${config.name}\nLeft-click to drag.\nRight-click to edit.`}
         >
             {/* Backing glow for transparent mode */}
             {isTransparent && <div style={transparentGlowStyle}></div>}

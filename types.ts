@@ -24,6 +24,10 @@ export interface MapNode {
     borderColor?: string;
     isCustomHighlighted?: boolean;
     isLocked?: boolean;
+
+    // Manual positioning overrides
+    manualOffsetX?: number;
+    manualOffsetY?: number;
 }
 
 export interface MapConfig {

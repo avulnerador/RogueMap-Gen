@@ -1,5 +1,6 @@
 
-import React, { useRef, useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { MapNode, MapConfig, VisualConfig, NodeTypeConfig } from '../types';
 import { MapNodeComponent } from './MapNodeComponent';
 
@@ -13,21 +14,22 @@ interface MapCanvasProps {
     pan: {x: number, y: number};
     setPan: React.Dispatch<React.SetStateAction<{x: number, y: number}>>;
     onNodeClick: (id: number) => void;
-    onFitToScreen: () => void; // New prop
+    onFitToScreen: () => void;
+    onNodeDrag: (id: number, dx: number, dy: number) => void; // New prop for updating node position
 }
 
 export const MapCanvas: React.FC<MapCanvasProps> = ({ 
     nodes, mapConfig, visualConfig, nodeTypes, 
-    zoom, setZoom, pan, setPan, onNodeClick, onFitToScreen
+    zoom, setZoom, pan, setPan, onNodeClick, onFitToScreen, onNodeDrag
 }) => {
-    const [isDragging, setIsDragging] = useState(false);
-    const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+    const [draggingNodeId, setDraggingNodeId] = useState<number | null>(null);
+    const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
     const [hoveredNodeId, setHoveredNodeId] = useState<number | null>(null);
 
     const flatNodes = nodes.flat();
 
     const handleWheel = (e: React.WheelEvent) => {
-        // Zoom with scroll (no Ctrl key required anymore)
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         setZoom(Math.max(0.1, Math.min(3, zoom + delta)));
     };
@@ -40,29 +42,53 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             return;
         }
 
-        // Left Click (Button 0) -> Start Panning
+        // Left Click (Button 0) -> Start Panning (Canvas Background)
         if(e.button === 0) { 
-             setIsDragging(true);
-             setLastPos({ x: e.clientX, y: e.clientY });
+             setIsPanning(true);
+             setLastMousePos({ x: e.clientX, y: e.clientY });
         }
+    };
+
+    // Triggered from Node Component on Left Click (MouseDown)
+    const handleNodeMouseDown = (e: React.MouseEvent, nodeId: number) => {
+        if (e.button !== 0) return; // Only process left click for node dragging
+        
+        e.preventDefault();
+        e.stopPropagation(); // Stop propagation so Canvas Panning doesn't start
+        
+        setDraggingNodeId(nodeId);
+        setLastMousePos({ x: e.clientX, y: e.clientY });
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging) {
-            const dx = e.clientX - lastPos.x;
-            const dy = e.clientY - lastPos.y;
+        const dx = e.clientX - lastMousePos.x;
+        const dy = e.clientY - lastMousePos.y;
+
+        if (draggingNodeId !== null) {
+            // Dragging a Node
+            // Convert screen pixels to map units based on zoom
+            const mapDx = dx / zoom;
+            const mapDy = dy / zoom;
+            
+            onNodeDrag(draggingNodeId, mapDx, mapDy);
+            setLastMousePos({ x: e.clientX, y: e.clientY });
+        } 
+        else if (isPanning) {
+            // Panning the Canvas
             setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-            setLastPos({ x: e.clientX, y: e.clientY });
+            setLastMousePos({ x: e.clientX, y: e.clientY });
         }
     };
 
-    const handleMouseUp = () => setIsDragging(false);
+    const handleMouseUp = () => {
+        setIsPanning(false);
+        setDraggingNodeId(null);
+    };
 
-    // Calculate lines
+    // Calculate lines (Same as before)
     const lines = [];
     const nodesById = new Map<number, MapNode>(flatNodes.map(n => [n.id, n]));
     
-    // Helper for finding node connections for highlighting
     const isConnected = (id1: number, id2: number) => {
         const n1 = nodesById.get(id1);
         if(!n1) return false;
@@ -77,10 +103,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             if (target) {
                 const isHighlighted = hoveredNodeId === node.id || hoveredNodeId === target.id;
                 
-                // Determine color based on highlight direction
                 let stroke = visualConfig.lineColorDefault;
                 let strokeWidth = 2;
-                let strokeDasharray = "5,5"; // Default dashed
+                let strokeDasharray = "5,5";
                 let zIndex = 0;
 
                 if (hoveredNodeId === node.id) {
@@ -91,14 +116,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 } else if (hoveredNodeId === target.id) {
                     stroke = visualConfig.lineColorIncoming;
                     strokeWidth = 3;
-                    strokeDasharray = "5,5"; // Incoming keeps dash
+                    strokeDasharray = "5,5";
                     zIndex = 10;
                 }
 
-                // --- GEOMETRY CALCULATION START ---
-                // Calculate intersection points to stop line at node border (or "invisible shape" border)
-                
-                // 1. Get radii based on custom size of each node
+                // Geometry Calculation
                 const r1 = (BASE_NODE_SIZE * (node.customSize || 1)) / 2;
                 const r2 = (BASE_NODE_SIZE * (target.customSize || 1)) / 2;
 
@@ -111,30 +133,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 let lineX2 = target.x;
                 let lineY2 = target.y;
 
-                // Only adjust if nodes are far enough apart to not overlap
                 if (dist > (r1 + r2)) {
-                    const ux = dx / dist; // Unit vector X
-                    const uy = dy / dist; // Unit vector Y
-
-                    // Dynamic Gap from Visual Config
-                    // If visualConfig.connectionGap is undefined (old saves), default to 5
+                    const ux = dx / dist;
+                    const uy = dy / dist;
                     const padding = visualConfig.connectionGap !== undefined ? visualConfig.connectionGap : 5;
-
-                    // Calculate Start/End Offsets
-                    // Clamp at 0 to prevent lines from reversing direction if padding is very negative
-                    // This allows "min slider" to result in center-to-center connection
                     const startOffset = Math.max(0, r1 + padding);
                     const endOffset = Math.max(0, r2 + padding);
 
-                    // Move start point forward from center
                     lineX1 = node.x + ux * startOffset;
                     lineY1 = node.y + uy * startOffset;
-                    
-                    // Move end point backward from target center
                     lineX2 = target.x - ux * endOffset;
                     lineY2 = target.y - uy * endOffset;
                 }
-                // --- GEOMETRY CALCULATION END ---
 
                 lines.push(
                     <line 
@@ -159,31 +169,38 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onWheel={handleWheel}
+            // Prevent default context menu on the canvas so right click nodes works without browser menu
+            onContextMenu={(e) => e.preventDefault()}
         >
             <div 
                 id="map-content-layer"
-                className="transition-transform duration-75 ease-linear absolute top-0 left-0"
+                className={`transition-transform duration-75 ease-linear absolute top-0 left-0 ${draggingNodeId !== null ? 'pointer-events-none' : ''}`} // Optimization: disable pointer events on layer while dragging
                 style={{ 
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                     transformOrigin: '0 0'
                 }}
             >
-                {/* Lines Layer (SVG) */}
+                {/* Lines Layer */}
                 <svg className="absolute top-0 left-0 overflow-visible" style={{ pointerEvents: 'none', zIndex: 0 }}>
                     {lines}
                 </svg>
 
                 {/* Nodes Layer */}
-                <div className="relative z-10">
+                <div className="relative z-10" style={{ pointerEvents: 'auto' }}>
                     {flatNodes.map(node => (
                         <MapNodeComponent 
                             key={node.id} 
                             node={node} 
                             config={nodeTypes[node.type]}
                             visualConfig={visualConfig}
-                            onClick={() => onNodeClick(node.id)}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onNodeClick(node.id);
+                            }}
                             onHover={setHoveredNodeId}
                             isHighlighted={hoveredNodeId !== null && (hoveredNodeId === node.id || isConnected(node.id, hoveredNodeId) || isConnected(hoveredNodeId, node.id))}
+                            onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                         />
                     ))}
                 </div>
