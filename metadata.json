@@ -1,0 +1,5 @@
+{
+  "name": "RogueMap Gen 2.0",
+  "description": "Professional Roguelike Map Generator with JSON export, zooming, and advanced node editing.",
+  "requestFramePermissions": []
+}

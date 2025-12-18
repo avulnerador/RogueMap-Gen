@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RogueMap do Urso</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%23ffffff' d='M234.5 17.5c6-9.6 20.3-10.4 27.2-1.6l172.3 219.7c7 8.9 2.5 22-8.3 24.8l-169.7 44.4-169.7-44.4c-10.8-2.8-15.3-15.9-8.3-24.8L234.5 17.5zM38.8 288.5L224 336.9v166.4L25.1 346.5c-9.5-2.2-14.8-12.2-11.9-21.5l25.6-36.5zm434.3 0l25.6 36.5c2.9 9.3-2.3 19.3-11.9 21.5L288 503.3V336.9l185.1-48.4zm-192.5 71.3L443 317 280.6 110v249.8zm-32.6 0V110L118.4 317l162.2 42.8z'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              gray: {
+                750: '#2d3748',
+                850: '#1a202c',
+                950: '#0d1117',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden; /* App handles scrolling */
+      }
+      /* Custom Scrollbar for panels */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b; 
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "html-to-image": "https://esm.sh/html-to-image@1.11.11"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
